@@ -59,8 +59,7 @@ object HorizontalBoxBlur {
       //--------------------------------------------------------------------------------
       // All the image strips have the same size. Make sure the size/step is positive.
       //--------------------------------------------------------------------------------
-      val size = (src.height / numTasks)
-      val step = if(size > 0) size else 1
+      val step = Math.max((src.height / numTasks), 1)
       val l = (0 to src.height by step)
       //--------------------------------------------------------------------------------
       // list zip list.tail creates 1 lag tuple (list[i], list[i+1)) list
@@ -72,8 +71,7 @@ object HorizontalBoxBlur {
       // There are (N - 1) strips with the same "size" and one strip whose size is (src.height % numTasks).
       // strips = [size, size, ... (src.height % numTasks)]
       //--------------------------------------------------------------------------------
-      val size = (src.height - (src.height % numTasks)) / (numTasks - 1)
-      val step = if(size > 0) size else 1
+      val step = Math.max((src.height - (src.height % numTasks)) / (numTasks - 1), 1)
       val l = (0 until src.height by step) :+ src.height
       l zip l.tail
     }
@@ -81,9 +79,14 @@ object HorizontalBoxBlur {
     //--------------------------------------------------------------------------------
     // Wait for the completion of all parallel tasks
     //--------------------------------------------------------------------------------
+    /*
+    strips.map(x =>  task {
+      blur(src, dst, x._1, x._2, radius)
+    }).foreach(_.join())
+    */
     val tasks = for((from, end) <- strips) yield task {
       blur(src, dst, from, end, radius)
     }
-    for (t <- tasks) t.join()
+    tasks.foreach(_.join)
   }
 }

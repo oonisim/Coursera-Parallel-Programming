@@ -57,13 +57,11 @@ object VerticalBoxBlur {
    */
   def parBlur(src: Img, dst: Img, numTasks: Int, radius: Int): Unit = {
     val strips = if ((src.width % numTasks) == 0){
-      val size = (src.width / numTasks)
-      val step = if(size > 0) size else 1
+      val step = Math.max((src.width / numTasks), 1)
       val l = (0 to src.width by step)
       l zip l.tail
     } else {
-      val size = (src.width - (src.width % numTasks)) / (numTasks - 1)
-      val step = if(size > 0) size else 1
+      val step = Math.max((src.width - (src.width % numTasks)) / (numTasks - 1), 1)
       val l = (0 until src.width by step) :+ src.width
       l zip l.tail
     }
@@ -71,6 +69,6 @@ object VerticalBoxBlur {
     val tasks = for((from, end) <- strips) yield task {
       blur(src, dst, from, end, radius)
     }
-    for (t <- tasks) t.join()
+    tasks.foreach(_.join())
   }
 }
